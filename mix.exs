@@ -5,9 +5,24 @@ defmodule SetupTag.Mixfile do
     [app: :setup_tag,
      version: "0.0.1",
      elixir: "~> 1.2",
+     description: description,
+     package: package,
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps]
+  end
+
+  def description do
+  """
+  Mix and match reusable test context by using tags
+  """
+  end
+
+  defp package do
+    [files: ["lib", "mix.exs", "README*"],
+     maintainers: ["Victor Borja"],
+     licenses: ["Apache 2.0"],
+     links: %{"GitHub" => "https://github.com/vic/setup_tag"}]
   end
 
   # Configuration for the OTP application
