@@ -8,7 +8,7 @@ reuse and mix functions over different modules.
 
 ## Installation
 
-[Available in Hex](https://hex.pm/docs/publish), the package can be installed as:
+[Available in Hex](https://hex.pm/packages/setup_tag), the package can be installed as:
 
   1. Add setup_tag to your list of dependencies in `mix.exs`:
 
