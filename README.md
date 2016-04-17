@@ -1,10 +1,14 @@
 # SetupTag
 
-**TODO: Add description**
+SetupTag allows you to create a test context by easily mix and match
+test setup functions selected by the tags applied to your test or module.
+
+Well, it's actually a feature of ExUnit, but this module lets you
+reuse and mix functions over different modules.
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed as:
+[Available in Hex](https://hex.pm/docs/publish), the package can be installed as:
 
   1. Add setup_tag to your list of dependencies in `mix.exs`:
 
@@ -12,9 +16,6 @@ If [available in Hex](https://hex.pm/docs/publish), the package can be installed
           [{:setup_tag, "~> 0.0.1"}]
         end
 
-  2. Ensure setup_tag is started before your application:
+## Usage
 
-        def application do
-          [applications: [:setup_tag]]
-        end
-
+See setup_tag_test.exs for example usage.
