@@ -1,50 +1,57 @@
-defmodule SetupTag.Example do
-  def bar(ctx = %{foo: foo}, baz) do
-    {:ok, %{ctx | foo: "#{foo}bar#{baz}"}}
-  end
-
-  def setup_foo(ctx) do
-    {:ok, Map.put(ctx, :foo, "foo")}
-  end
+defmodule SetupTagTest.Mars do
+  def moo(ctx), do: {:ok, Map.put(ctx, :moo, "Mars Moo")}
+  def moo(ctx, thing), do: {:ok, Map.put(ctx, :moo, "Mars #{thing}")}
 end
+
 
 defmodule SetupTagTest do
+
   use ExUnit.Case
   use SetupTag
+  alias __MODULE__.{Mars}
 
-  @moduletag :setup_two
-  @ctx %{one: 1}
+  def moo(ctx), do: {:ok, Map.put(ctx, :moo, "Earth Moo")}
+  def one(ctx), do: {:ok, Map.put(ctx, :one, 1)}
+  def dup_one(ctx = %{one: x}), do: {:ok, %{ctx | one: x + x }}
+  def mul_one(ctx = %{one: x}, y), do: {:ok, %{ctx | one: x * y }}
 
-  setup(tags) do
-    SetupTag.setup(tags, @ctx)
+  @mars_moo &Mars.moo/1
+  @mars_moon &Mars.moo/2
+
+  @tag setup: :moo
+  test "requesting local moo to be injected", %{moo: x} do
+    assert x == "Earth Moo"
   end
 
-  def setup_double(ctx) do
-    {:ok, %{ctx | one: 2}}
+  @tag setup: &Mars.moo/1
+  test "requesting remote moo", %{moo: x} do
+    assert x == "Mars Moo"
   end
 
-  def setup_two(ctx = %{one: one}) do
-    {:ok, Map.put(ctx, :two, one * 2)}
+  @tag setup: @mars_moo
+  test "requesting remote moo with attribute", %{moo: x} do
+    assert x == "Mars Moo"
   end
 
-  test "mixes initial context with module tag", %{one: one, two: two} do
-    assert one + one == two
+  @tag setup: [:one, :dup_one]
+  test "combining contexts", %{one: x} do
+    assert x == 2
   end
 
-  @tag :setup_double
-  test "combines test local tag then module tag", %{one: 2, two: 4} do
-    assert :ok
+  @tag setup: [:one, :dup_one, mul_one: 3]
+  test "combining with a function with arguments", %{one: x} do
+    assert x == 6
   end
 
-  @tag setup_foo: SetupTag.Example
-  test "calling setup function from other module", %{foo: foo} do
-    assert foo == "foo"
+  @tag setup: [:one, @mars_moo]
+  test "combining one and mars", %{moo: x, one: 1} do
+    assert x == "Mars Moo"
   end
 
-  @tag setup_foo: SetupTag.Example
-  @tag setup_foo_bar: {SetupTag.Example, bar: ["baz"]}
-  test "remote function called with context as first argument", %{foo: foo} do
-    assert foo == "foobarbaz"
+  @tag setup: [{@mars_moon, "Moon"}]
+  @tag setup_one: :one
+  test "remove function with additional arguments", %{moo: x, one: 1} do
+    assert x == "Mars Moon"
   end
-
 end
+

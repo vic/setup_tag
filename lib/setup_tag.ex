@@ -1,5 +1,4 @@
 defmodule SetupTag do
-
   @moduledoc """
   SetupTag allows you to create a test context by easily mix and match
   test setup functions selected by the tags applied to your test or module.
@@ -11,54 +10,80 @@ defmodule SetupTag do
   """
 
   @doc false
-  defmacro __using__(_opts) do
+  defmacro __using__(opts) do
     quote do
+      Module.register_attribute __MODULE__, :setup, accumulate: true
 
-      def setup_tag(_, ctx), do: {:ok, ctx}
-      defoverridable [setup_tag: 2]
-
+      setup(context) do
+        unquote(__MODULE__).setup(context)
+      end
     end
   end
 
-  @doc """
-  Creates a new test context by applying
-  the provided context to setup_tag functions
-  selected by the test or module tags.
-
-  Returns {:ok, new_context}
-  """
-  def setup(tags = %{case: module}, context) do
-    {:ok, Enum.reduce(tags, context,
-        &setup_tag(module, &1, &2))}
+  def setup(context = %{case: module, setup: name}) do
+    setup(module, name, context)
   end
 
-  defp setup_tag(module, {name, true}, context) do
-    if setup_tag?(name) do
-      setup_tag(module, {name, {module, [{name, []}]}}, context)
+  def setup(context = %{case: module}) do
+    {:ok, context}
+  end
+
+  defp setup(module, atom, context) when is_atom(atom) do
+    setup(module, [atom], context)
+  end
+
+  defp setup(module, setup_fns, context) do
+    {:ok, Enum.reduce(context, context, &maybe_setup(module, &1, &2))}
+  end
+
+  defp maybe_setup(module, {name, value}, context) do
+    if is_atom(name) and String.starts_with?("#{name}", "setup") do
+      {:ok, new_context} = do_setup(module, name, value, context)
+      new_context
     else
       context
     end
   end
 
-  defp setup_tag(_, {name, module}, context) when is_atom(module) do
-    if setup_tag?(name) do
-      setup_tag(module, {name, {module, [{name, []}]}}, context)
-    else
-      context
-    end
+  defp maybe_setup(module, _, context), do: context
+
+  defp do_setup(module, tag_name, setup, context) when is_atom(setup) do
+    apply(module, setup, [context])
   end
 
-  defp setup_tag(_, {name, {module, [{fname, args}]}}, context) do
-    {:ok, new_context} = apply(module, fname, [context] ++ args)
+  defp do_setup(module, tag_name, func, context) when is_function(func) do
+    func.(context)
+  end
+
+  defp do_setup(module, tag_name, funs, context) when is_list(funs) do
+    {:ok, Enum.reduce(funs, context, &seq_setup(module, &1, &2))}
+  end
+
+  defp seq_setup(module, fun, context) when is_function(fun) do
+    {:ok, new_context} = fun.(context)
     new_context
   end
 
-  defp setup_tag(module, tag, context) do
-    {:ok, new_context} = apply(module, :setup_tag, [tag, context])
+  defp seq_setup(module, fun, context) when is_atom(fun) do
+    {:ok, new_context} = apply(module, fun, [context])
     new_context
   end
 
-  defp setup_tag?(name) do
-    Atom.to_string(name) |> String.starts_with?("setup_")
+  defp seq_setup(module, {name, value}, context) when is_binary(value) do
+    seq_setup(module, {name, [value]}, context)
+  end
+
+  defp seq_setup(module, {name, value}, context) when not is_list(value) do
+    seq_setup(module, {name, [value]}, context)
+  end
+
+  defp seq_setup(module, {fun, args}, context) when is_function(fun) do
+    {:ok, new_context} = apply(fun, [context] ++ args)
+    new_context
+  end
+
+  defp seq_setup(module, {name, args}, context) do
+    {:ok, new_context} = apply(module, name, [context] ++ args)
+    new_context
   end
 end
