@@ -53,5 +53,10 @@ defmodule SetupTagTest do
   test "remove function with additional arguments", %{moo: x, one: 1} do
     assert x == "Mars Moon"
   end
+
+  @tag setup_one: :one
+  test "only setup_one", %{one: x} do
+    assert x == 1
+  end
 end
 
