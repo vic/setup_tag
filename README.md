@@ -19,3 +19,20 @@ reuse and mix functions over different modules.
 ## Usage
 
 See `setup_tag_text.exs` for a complete example
+
+```elixir
+defmodule SetupTagTest do
+
+  use ExUnit.Case
+  use SetupTag
+  
+  def one(ctx), do: {:ok, Map.put(ctx, :one, 1)}
+  def dup_one(ctx = %{one: x}), do: {:ok, %{ctx | one: x + x }}
+  def mul_one(ctx = %{one: x}, y), do: {:ok, %{ctx | one: x * y }}
+  
+  @tag setup: [:one, :dup_one, mul_one: 3]
+  test "combining with a function with arguments", %{one: x} do
+    assert x == 6
+  end
+end
+```
