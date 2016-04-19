@@ -12,8 +12,6 @@ defmodule SetupTag do
   @doc false
   defmacro __using__(_opts) do
     quote do
-      Module.register_attribute __MODULE__, :setup, accumulate: true
-
       setup(context) do
         unquote(__MODULE__).setup(context)
       end
