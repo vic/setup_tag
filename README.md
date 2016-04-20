@@ -13,7 +13,7 @@ reuse and mix functions over different modules.
   1. Add setup_tag to your list of dependencies in `mix.exs`:
 
         def deps do
-          [{:setup_tag, "~> 0.0.1"}]
+          [{:setup_tag, "~> 0.1.2", only: [:test}]
         end
 
 ## Usage
