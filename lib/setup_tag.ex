@@ -55,5 +55,15 @@ defmodule SetupTag do
     apply(fun, [context] ++ args)
   end
 
+  defp setup_run(module, {name, args, attr}, context) when not is_list(attr) or is_binary(attr) do
+    setup_run(module, {name, args, [attr]}, context)
+  end
+
+  defp setup_run(module, {name, args, attr}, context) do
+    value = setup_run(module, {name, args}, context)
+    {:ok, put_in(context, attr, value)}
+  end
+
+
 end
 
