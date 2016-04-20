@@ -1,6 +1,8 @@
 defmodule SetupTagTest.Mars do
   def moo(ctx), do: {:ok, Map.put(ctx, :moo, "Mars Moo")}
   def moo(ctx, thing), do: {:ok, Map.put(ctx, :moo, "Mars #{thing}")}
+
+  def one(ctx, value), do: {:ok, Map.put(ctx, :one, value)}
 end
 
 
@@ -58,5 +60,16 @@ defmodule SetupTagTest do
   test "only setup_one", %{one: x} do
     assert x == 1
   end
+
+  @tag setup: {&Mars.one/2, 99}
+  test "only function reference", %{one: x} do
+    assert x == 99
+  end
+
+  @tag setup: [{&Mars.one/2, 99}]
+  test "only function reference in list", %{one: x} do
+    assert x == 99
+  end
+
 end
 

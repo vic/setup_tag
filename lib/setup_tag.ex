@@ -19,61 +19,41 @@ defmodule SetupTag do
   end
 
   def setup(context = %{case: module}) do
-    setup(module, context)
-  end
-
-  defp setup(module, context) do
-    {:ok, Enum.reduce(context, context, &maybe_setup(module, &1, &2))}
-  end
-
-  defp maybe_setup(module, {name, value}, context) do
-    if is_atom(name) and String.starts_with?("#{name}", "setup") do
-      {:ok, new_context} = do_setup(module, name, value, context)
+    context = context
+    |> Enum.filter_map(&setup_tag?/1, &setup_fn/1)
+    |> List.flatten
+    |> Enum.reduce(context, fn setup, context ->
+      {:ok, new_context} = setup_run(module, setup, context)
       new_context
-    else
-      context
-    end
+    end)
+    {:ok, context}
   end
 
-  defp maybe_setup(_module, _, context), do: context
-
-  defp do_setup(module, _tag_name, setup, context) when is_atom(setup) do
-    apply(module, setup, [context])
+  defp setup_tag?({k, _v}) do
+    String.starts_with?("#{k}", "setup")
   end
 
-  defp do_setup(_module, _tag_name, func, context) when is_function(func) do
-    func.(context)
+  defp setup_fn({_k, v}), do: v
+
+  defp setup_run(module, name, context) when not is_tuple(name) do
+    setup_run(module, {name, []}, context)
   end
 
-  defp do_setup(module, _tag_name, funs, context) when is_list(funs) do
-    {:ok, Enum.reduce(funs, context, &seq_setup(module, &1, &2))}
+  defp setup_run(module, {name}, context) do
+    setup_run(module, {name, []}, context)
   end
 
-  defp seq_setup(_module, fun, context) when is_function(fun) do
-    {:ok, new_context} = fun.(context)
-    new_context
+  defp setup_run(module, {name, args}, context) when not is_list(args) do
+    setup_run(module, {name, [args]}, context)
   end
 
-  defp seq_setup(module, fun, context) when is_atom(fun) do
-    {:ok, new_context} = apply(module, fun, [context])
-    new_context
+  defp setup_run(module, {name, args}, context) when is_atom(name) do
+    apply(module, name, [context] ++ args)
   end
 
-  defp seq_setup(module, {name, value}, context) when is_binary(value) do
-    seq_setup(module, {name, [value]}, context)
+  defp setup_run(_module, {fun, args}, context) when is_function(fun) do
+    apply(fun, [context] ++ args)
   end
 
-  defp seq_setup(module, {name, value}, context) when not is_list(value) do
-    seq_setup(module, {name, [value]}, context)
-  end
-
-  defp seq_setup(_module, {fun, args}, context) when is_function(fun) do
-    {:ok, new_context} = apply(fun, [context] ++ args)
-    new_context
-  end
-
-  defp seq_setup(module, {name, args}, context) do
-    {:ok, new_context} = apply(module, name, [context] ++ args)
-    new_context
-  end
 end
+
