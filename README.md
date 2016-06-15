@@ -3,8 +3,7 @@
 SetupTag allows you to create a test context by easily mix and match
 test setup functions selected by the tags applied to your test or module.
 
-Well, it's actually a feature of ExUnit, but this module lets you
-reuse and mix functions over different modules.
+*Deprecated* since elixir 1.0.3.rc-1 has `setup` in exunit core.
 
 ## Installation
 
